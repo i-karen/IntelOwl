@@ -60,6 +60,15 @@ def mocked_pypdns(*args, **kwargs):
     return MockResponseNoOp({}, 200)
 
 
+def mocked_dnsdb_v2_request(*args, **kwargs):
+    return MockResponseNoOp('{"cond":"begin"}\n'
+                            '{"obj":{"count":1045,"zone_time_first":1349367341,'
+                            '"zone_time_last":1440606099,"rrname":"certego.net.",'
+                            '"rrtype":"NS","bailiwick":"net.",'
+                            '"rdata":["ns1.register.it.","ns2.register.it."]}}\n'
+                            '{"cond":"limited","msg":"Result limit reached"}\n', 200)
+
+
 @mock_connections(patch("requests.get", side_effect=mocked_requests))
 @mock_connections(patch("requests.post", side_effect=mocked_requests))
 class IPAnalyzersTests(
@@ -241,6 +250,7 @@ class IPAnalyzersTests(
         ).start()
         self.assertEqual(report.get("success", False), True)
 
+    @mock_connections(patch("requests.get", side_effect=mocked_dnsdb_v2_request))
     def test_dnsdb(self, mock_get=None, mock_post=None):
         report = dnsdb.DNSdb(
             "DNSDB",
@@ -354,6 +364,7 @@ class DomainAnalyzersTests(
         ).start()
         self.assertEqual(report.get("success", False), True)
 
+    @mock_connections(patch("requests.get", side_effect=mocked_dnsdb_v2_request))
     def test_dnsdb(self, mock_get=None, mock_post=None):
         report = dnsdb.DNSdb(
             "DNSDB",
